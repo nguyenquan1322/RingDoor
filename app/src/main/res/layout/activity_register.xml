@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@drawable/bg_gradient_ringdoor">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <!-- Logo + Tên ứng dụng -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:id="@+id/imgLogo"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ringdoor_logo"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="-18dp" /> <!-- 🔹 Kéo chữ dính sát logo -->
+
+            <TextView
+                android:id="@+id/tvAppName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ring Door System"
+                android:textColor="#1A73E8"
+                android:textStyle="bold"
+                android:textSize="24sp"
+                android:fontFamily="sans-serif-medium"
+                android:includeFontPadding="false"
+                android:gravity="center"
+                android:layout_gravity="center_horizontal" />
+        </LinearLayout>
+
+        <!-- Khung form trắng bo tròn -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:background="@drawable/bg_login_card"
+            android:elevation="6dp">
+
+            <!-- Tên hiển thị -->
+            <EditText
+                android:id="@+id/etDisplayName"
+                android:hint="Tên hiển thị"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:background="@drawable/bg_input"
+                android:padding="12dp"
+                android:drawableStart="@android:drawable/ic_menu_edit"
+                android:drawablePadding="10dp"
+                android:layout_marginBottom="14dp" />
+
+            <!-- Tên đăng nhập -->
+            <EditText
+                android:id="@+id/etNewUser"
+                android:hint="Tên đăng nhập"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:background="@drawable/bg_input"
+                android:padding="12dp"
+                android:drawableStart="@android:drawable/ic_menu_myplaces"
+                android:drawablePadding="10dp"
+                android:layout_marginBottom="14dp" />
+
+            <!-- Mật khẩu -->
+            <EditText
+                android:id="@+id/etNewPass"
+                android:hint="Mật khẩu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:background="@drawable/bg_input"
+                android:padding="12dp"
+                android:drawableStart="@android:drawable/ic_lock_idle_lock"
+                android:drawablePadding="10dp"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Nút đăng ký -->
+            <Button
+                android:id="@+id/btnRegister"
+                android:text="Đăng ký"
+                android:textAllCaps="false"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#1A73E8"
+                android:padding="12dp"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <!-- Nút quay lại -->
+            <Button
+                android:id="@+id/btnBack"
+                android:text="Quay lại đăng nhập"
+                android:textAllCaps="false"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="#1A73E8"
+                android:backgroundTint="#E3F2FD"
+                android:padding="12dp"
+                android:textSize="15sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <!-- Khoảng trống dưới -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="32dp" />
+    </LinearLayout>
+</ScrollView>

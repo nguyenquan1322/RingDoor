@@ -1,0 +1,37 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.ringdoor">
+
+    <application
+        android:allowBackup="true"
+        android:label="RingDoor"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Material3.DayNight.NoActionBar">
+
+        <!-- Màn hình chính -->
+        <activity android:name=".MainActivity" />
+
+        <!-- Màn hình đăng nhập -->
+        <activity android:name=".LoginActivity" />
+
+        <activity android:name=".RegisterActivity" />
+
+<!--        <activity android:name=".SecuritySettingsActivity" />-->
+
+<!--        <activity android:name=".FingerprintManagementActivity" />-->
+
+<!--        <activity android:name=".HistoryActivity" />-->
+
+<!--        <activity android:name=".PasswordManagementActivity" />-->
+
+        <!-- Màn hình khởi động (logo) -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

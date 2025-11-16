@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "85656704070",
+    "project_id": "ringdoor-90d68",
+    "storage_bucket": "ringdoor-90d68.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:85656704070:android:72ae4167afe5b0aa87a647",
+        "android_client_info": {
+          "package_name": "com.example.ringdoor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_eTJsRULC3VWNpP0_bjbN3pnkhCtHiGk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
