@@ -1,15 +1,21 @@
 package com.example.ringdoor;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.widget.*;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AlertDialog;
 
 import com.google.firebase.database.*;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -25,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
 
     DatabaseReference statusRef;
     DatabaseReference ringRef;
+
+    ValueEventListener ringListener;
 
     public static boolean isForeground = false;
     public static MainActivity instance;
@@ -42,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
         tvGreeting = findViewById(R.id.tvGreeting);
         tvDoorStatus = findViewById(R.id.tvDoorStatus);
 
-        // 🔥 Android 13+ xin quyền nhận thông báo
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.requestPermissions(
                     this,
@@ -51,15 +58,9 @@ public class MainActivity extends AppCompatActivity {
             );
         }
 
-        // 🔥 Subsribe topic để nhận FCM
         FirebaseMessaging.getInstance().subscribeToTopic("ringdoor")
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Log.d("FCM", "Subscribed to ringdoor topic");
-                    }
-                });
+                .addOnCompleteListener(task -> Log.d("FCM", "Subscribed"));
 
-        // ====== Check login ======
         SharedPreferences prefs = getSharedPreferences("RingDoorPrefs", MODE_PRIVATE);
         String username = prefs.getString("username", "");
         String displayName = prefs.getString("displayName", "");
@@ -72,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvGreeting.setText(buildGreeting(displayName));
 
-        // ====== Listen door status ======
+        // Listen door status
         statusRef = FirebaseDatabase.getInstance()
                 .getReference("Devices")
                 .child(deviceId)
@@ -82,41 +83,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String status = snapshot.getValue(String.class);
-                if (status != null)
-                    tvDoorStatus.setText("📡 Trạng thái: " + status);
-                else
-                    tvDoorStatus.setText("📡 Không có phản hồi");
+                tvDoorStatus.setText(status != null ?
+                        "📡 Trạng thái: " + status :
+                        "📡 Không có phản hồi");
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                tvDoorStatus.setText("⚠️ Lỗi đọc trạng thái cửa!");
+                tvDoorStatus.setText("⚠️ Lỗi đọc trạng thái!");
             }
         });
 
-        // ====== Listen doorbell ======
-        ringRef = FirebaseDatabase.getInstance()
-                .getReference("Devices")
-                .child(deviceId)
-                .child("statusRing");
-
-        ringRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String state = snapshot.getValue(String.class);
-                if ("ringOn".equals(state)) {
-
-                    if (isForeground) {
-                        showDoorbellPopup();
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
-        });
-
-        // ====== Buttons ======
         btnUnlock.setOnClickListener(v -> {
             sendCommand("open_door", "");
             tvDoorStatus.setText("🔁 Đang mở cửa...");
@@ -141,8 +118,18 @@ public class MainActivity extends AppCompatActivity {
         isForeground = true;
         instance = this;
 
-        Intent intent = getIntent();
-        if (intent != null && intent.getBooleanExtra("fromNotification", false)) {
+        // REGISTER BROADCAST RECEIVER
+        IntentFilter filter = new IntentFilter("DOORBELL_EVENT");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(doorbellReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(doorbellReceiver, filter);
+        }
+
+        // REGISTER FIREBASE LISTENER SAFE
+        registerRingListener();
+
+        if (getIntent().getBooleanExtra("fromNotification", false)) {
             showDoorbellPopup();
         }
     }
@@ -151,13 +138,55 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         isForeground = false;
+
+        // GỠ RECEIVER
+        unregisterReceiver(doorbellReceiver);
+
+        // GỠ LISTENER FIREBASE
+        if (ringRef != null && ringListener != null)
+            ringRef.removeEventListener(ringListener);
     }
 
-    public static void triggerDoorbellPopup() {
-        if (instance != null && isForeground) {
-            instance.showDoorbellPopup();
-        }
+    // Firebase ring listener - SAFE
+    private void registerRingListener() {
+
+        ringRef = FirebaseDatabase.getInstance()
+                .getReference("Devices")
+                .child(deviceId)
+                .child("statusRing");
+
+        ringListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+
+                if (!isForeground || isFinishing() || isDestroyed())
+                    return;
+
+                String state = snapshot.getValue(String.class);
+
+                if ("ringOn".equals(state)) {
+                    runOnUiThread(() -> showDoorbellPopup());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+
+        ringRef.addValueEventListener(ringListener);
     }
+
+    // Broadcast receiver
+    private final BroadcastReceiver doorbellReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if (!isForeground || isFinishing() || isDestroyed())
+                return;
+
+            showDoorbellPopup();
+        }
+    };
 
     private void sendCommand(String type, String value) {
         DatabaseReference cmd = FirebaseDatabase.getInstance()
@@ -173,14 +202,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showDoorbellPopup() {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("🔔 Chuông cửa")
-                .setMessage("Có người bấm chuông! Bạn có muốn mở cửa không?")
-                .setPositiveButton("Mở cửa", (d, w) ->
-                        sendCommand("open_door", "")
-                )
-                .setNegativeButton("Đóng", null)
-                .show();
+
+        // FIX CRASH: activity đã đóng
+        if (isFinishing() || isDestroyed()) {
+            Log.d("POPUP", "Activity not running → skip popup");
+            return;
+        }
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        android.view.View view = inflater.inflate(R.layout.popup_doorbell, null, false);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null)
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        dialog.show();
+
+        Button btnOpen = view.findViewById(R.id.btnOpenDoor);
+        Button btnClose = view.findViewById(R.id.btnClosePopup);
+
+        btnOpen.setOnClickListener(v -> {
+            sendCommand("open_door", "");
+            dialog.dismiss();
+        });
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
     }
 
     private String buildGreeting(String name) {
